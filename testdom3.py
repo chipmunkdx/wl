@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Author : Tim Hall
+# Author : chipmunkdx
 # Save Script as : create_domain.py
 
 # ------------------------------------------------------------------------------
