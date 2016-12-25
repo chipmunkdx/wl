@@ -138,70 +138,130 @@ ls()
 # Configuration JDBC Resources.
 # ------------------------------------------------------------------------------
 #
-servermb=getMBean("Servers/examplesServer")
-    if servermb is None:
-       print '@@@ No server MBean found'
-    else:
-       def addJDBC(prefix):
 
-       print("")
-       print("*** Creating JDBC with property prefix " + prefix)
-      
-      # Create the Connection Pool.  The system resource will have
-      # generated name of <PoolName>+"-jdbc"
+propInputStream = FileInputStream("details.properties")
+configProps = Properties()
+configProps.load(propInputStream)
+ 
+domainName=configProps.get("domain.name")
+adminURL=configProps.get("admin.url")
+adminUserName=configProps.get("admin.userName")
+adminPassword=configProps.get("admin.password")
+ 
+dsName=configProps.get("datasource.name")
+dsFileName=configProps.get("datasource.filename")
+dsDatabaseName=configProps.get("datasource.database.name")
+datasourceTarget=configProps.get("datasource.target")
+dsJNDIName=configProps.get("datasource.jndiname")
+dsDriverName=configProps.get("datasource.driver.class")
+dsURL=configProps.get("datasource.url")
+dsUserName=configProps.get("datasource.username")
+dsPassword=configProps.get("datasource.password")
+dsTestQuery=configProps.get("datasource.test.query")
+ 
+connect(adminUserName, adminPassword, adminURL)
+edit()
+startEdit()
+cd('/')
+cmo.createJDBCSystemResource(dsName)
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName)
+cmo.setName(dsName)
+ 
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCDataSourceParams/' + dsName )
+set('JNDINames',jarray.array([String('jdbc/' + dsName )], String))
+ 
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCDriverParams/' + dsName )
+cmo.setUrl(dsURL)
+cmo.setDriverName( dsDriverName )
+cmo.setPassword(dsPassword)
+ 
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCConnectionPoolParams/' + dsName )
+cmo.setTestTableName(dsTestQuery)
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCDriverParams/' + dsName + '/Properties/' + dsName )
+cmo.createProperty('user')
+ 
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCDriverParams/' + dsName + '/Properties/' + dsName + '/Properties/user')
+cmo.setValue(dsUserName)
+ 
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCDriverParams/' + dsName + '/Properties/' + dsName )
+cmo.createProperty('databaseName')
+ 
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCDriverParams/' + dsName + '/Properties/' + dsName + '/Properties/databaseName')
+cmo.setValue(dsDatabaseName)
+ 
+cd('/JDBCSystemResources/' + dsName + '/JDBCResource/' + dsName + '/JDBCDataSourceParams/' + dsName )
+cmo.setGlobalTransactionsProtocol('OnePhaseCommit')
+ 
+cd('/SystemResources/' + dsName )
+set('Targets',jarray.array([ObjectName('com.bea:Name=' + datasourceTarget + ',Type=Server')], ObjectName))
+ 
+save()
+activate()
 
-      myResourceName = props.getProperty(prefix+"PoolName")
-      print("Here is the Resource Name: " + myResourceName)
-
-      jdbcSystemResource = wl.create(myResourceName,"JDBCSystemResource")
-      myFile = jdbcSystemResource.getDescriptorFileName()
-      print ("HERE IS THE JDBC FILE NAME: " + myFile)
-      
-      jdbcResource = jdbcSystemResource.getJDBCResource()
-      jdbcResource.setName(props.getProperty(prefix+"PoolName"))
-
-      # Create the DataSource Params
-      dpBean = jdbcResource.getJDBCDataSourceParams()
-      myName=props.getProperty(prefix+"JNDIName")
-      dpBean.setJNDINames([myName])
-
-      # Create the Driver Params
-      drBean = jdbcResource.getJDBCDriverParams()
-      drBean.setPassword(props.getProperty(prefix+"Password"))
-      drBean.setUrl(props.getProperty(prefix+"URLName"))
-      drBean.setDriverName(props.getProperty(prefix+"DriverName"))
-
-      propBean = drBean.getProperties()
-      driverProps = Properties()
-      driverProps.setProperty("user",props.getProperty(prefix+"UserName"))
-
-      e = driverProps.propertyNames()
-      while e.hasMoreElements() :
-	 propName = e.nextElement()
-	 myBean = propBean.createProperty(propName)
-	 myBean.setValue(driverProps.getProperty(propName))
-
-      # Create the ConnectionPool Params
-      ppBean = jdbcResource.getJDBCConnectionPoolParams()
-      ppBean.setInitialCapacity(int(props.getProperty(prefix+"InitialCapacity")))
-      ppBean.setMaxCapacity(int(props.getProperty(prefix+"MaxCapacity")))
-      ppBean.setCapacityIncrement(int(props.getProperty(prefix+"CapacityIncrement")))
-
-      if not props.getProperty(prefix+"ShrinkPeriodMinutes") == None:
-         ppBean.setShrinkFrequencySeconds(int(props.getProperty(prefix+"ShrinkPeriodMinutes")))
-
-      if not props.getProperty(prefix+"TestTableName") == None:
-	 ppBean.setTestTableName(props.getProperty(prefix+"TestTableName"))
-
-      if not props.getProperty(prefix+"LoginDelaySeconds") == None:
-         ppBean.setLoginDelaySeconds(int(props.getProperty(prefix+"LoginDelaySeconds")))
-                  
-	          # Adding KeepXaConnTillTxComplete to help with in-doubt transactions.
-	          xaParams = jdbcResource.getJDBCXAParams()
-	          xaParams.setKeepXaConnTillTxComplete(1)
-
-	          # Add Target
-	          jdbcSystemResource.addTarget(wl.getMBean("/Servers/examplesServer"))
+#servermb=getMBean("Servers/examplesServer")
+#    if servermb is None:
+#       print '@@@ No server MBean found'
+#    else:
+#       def addJDBC(prefix):
+#
+#       print("")
+#       print("*** Creating JDBC with property prefix " + prefix)
+#      
+#      # Create the Connection Pool.  The system resource will have
+#      # generated name of <PoolName>+"-jdbc"
+#
+#      myResourceName = props.getProperty(prefix+"PoolName")
+#      print("Here is the Resource Name: " + myResourceName)
+#
+#      jdbcSystemResource = wl.create(myResourceName,"JDBCSystemResource")
+#      myFile = jdbcSystemResource.getDescriptorFileName()
+#      print ("HERE IS THE JDBC FILE NAME: " + myFile)
+#      
+#      jdbcResource = jdbcSystemResource.getJDBCResource()
+#      jdbcResource.setName(props.getProperty(prefix+"PoolName"))
+#
+#      # Create the DataSource Params
+#      dpBean = jdbcResource.getJDBCDataSourceParams()
+#      myName=props.getProperty(prefix+"JNDIName")
+#      dpBean.setJNDINames([myName])
+#
+#      # Create the Driver Params
+#      drBean = jdbcResource.getJDBCDriverParams()
+#      drBean.setPassword(props.getProperty(prefix+"Password"))
+#      drBean.setUrl(props.getProperty(prefix+"URLName"))
+#      drBean.setDriverName(props.getProperty(prefix+"DriverName"))
+#
+#      propBean = drBean.getProperties()
+#      driverProps = Properties()
+#      driverProps.setProperty("user",props.getProperty(prefix+"UserName"))
+#
+#      e = driverProps.propertyNames()
+#      while e.hasMoreElements() :
+#	 propName = e.nextElement()
+#	 myBean = propBean.createProperty(propName)
+#	 myBean.setValue(driverProps.getProperty(propName))
+#
+#      # Create the ConnectionPool Params
+#      ppBean = jdbcResource.getJDBCConnectionPoolParams()
+#      ppBean.setInitialCapacity(int(props.getProperty(prefix+"InitialCapacity")))
+#      ppBean.setMaxCapacity(int(props.getProperty(prefix+"MaxCapacity")))
+#      ppBean.setCapacityIncrement(int(props.getProperty(prefix+"CapacityIncrement")))
+#
+#      if not props.getProperty(prefix+"ShrinkPeriodMinutes") == None:
+#         ppBean.setShrinkFrequencySeconds(int(props.getProperty(prefix+"ShrinkPeriodMinutes")))
+#
+#      if not props.getProperty(prefix+"TestTableName") == None:
+#	 ppBean.setTestTableName(props.getProperty(prefix+"TestTableName"))
+#
+#      if not props.getProperty(prefix+"LoginDelaySeconds") == None:
+#         ppBean.setLoginDelaySeconds(int(props.getProperty(prefix+"LoginDelaySeconds")))
+#                  
+#	          # Adding KeepXaConnTillTxComplete to help with in-doubt transactions.
+#	          xaParams = jdbcResource.getJDBCXAParams()
+#	          xaParams.setKeepXaConnTillTxComplete(1)
+#
+#	          # Add Target
+#	          jdbcSystemResource.addTarget(wl.getMBean("/Servers/examplesServer"))
 
 # ------------------------------------------------------------------------------
 # JMS configuration.
@@ -209,39 +269,44 @@ servermb=getMBean("Servers/examplesServer")
 # simple test for JMS configuration.
 cd(‘/’)
 print ‘Creating JMS Server.’
-//Step 1
-servermb=getMBean("Servers/examplesServer")
-    if servermb is None:
-        print '@@@ No server MBean found'
+#//Step 1
+#servermb=getMBean("Servers/examplesServer")
+#    if servermb is None:
+#        print '@@@ No server MBean found'
+#
+#else:
+//Step 2
+jmsMySystemResource = create(myJmsSystemResource,"JMSSystemResource")
 
-else:
-    //Step 2
-    jmsMySystemResource = create(myJmsSystemResource,"JMSSystemResource")
-    //Step 3
-    jmsMySystemResource.addTarget(servermb)
+//Step 3
+jmsMySystemResource.addTarget(servermb)
 
-    //Step 4
-    theJMSResource = jmsMySystemResource.getJMSResource()
+//Step 4
+theJMSResource = jmsMySystemResource.getJMSResource()
 
-    //Step 5
-    connfact1 = theJMSResource.createConnectionFactory(factoryName)
-    jmsqueue1 = theJMSResource.createQueue(queueName)
-    //Step 6
-    connfact1.setJNDIName(factoryName)
-    jmsqueue1.setJNDIName(queueName)
+//Step 5
+connfact1 = theJMSResource.createConnectionFactory(factoryName)
+jmsqueue1 = theJMSResource.createQueue(queueName)
 
-    //Step 7
-    jmsqueue1.setSubDeploymentName('DeployToJMSServer1')  
-    connfact1.setSubDeploymentName('DeployToJMSServer1')
-    //Step 8
-    jmsserver1mb = create(jmsServerName,'JMSServer')
-    //Step 9
-    jmsserver1mb.addTarget(servermb)
+//Step 6
+connfact1.setJNDIName(factoryName)
+jmsqueue1.setJNDIName(queueName)
 
-    //Step 10
-    subDep1mb = jmsMySystemResource.createSubDeployment('DeployToJMSServer1')
-    //Step 11
-    subDep1mb.addTarget(jmsserver1mb)
+//Step 7
+jmsqueue1.setSubDeploymentName('DeployToJMSServer1')  
+connfact1.setSubDeploymentName('DeployToJMSServer1')
+
+//Step 8
+jmsserver1mb = create(jmsServerName,'JMSServer')
+
+//Step 9
+jmsserver1mb.addTarget(servermb)
+
+//Step 10
+subDep1mb = jmsMySystemResource.createSubDeployment('DeployToJMSServer1')
+
+//Step 11
+subDep1mb.addTarget(jmsserver1mb)
 
     # simple test.
     #cmo.createJMSServer(‘JMSServer0′)
